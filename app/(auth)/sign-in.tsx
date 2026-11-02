@@ -5,10 +5,12 @@ import { useState } from 'react';
 import { SafeAreaView as RNSafeAreaView } from 'react-native-safe-area-context';
 import { styled } from 'nativewind';
 import { usePostHog } from 'posthog-react-native';
+import { useThemeColors } from "@/lib/useThemeColors";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 const SignIn = () => {
+    const { placeholder: placeholderColor } = useThemeColors();
     const { signIn, errors, fetchStatus } = useSignIn();
     const router = useRouter();
     const posthog = usePostHog();
@@ -164,7 +166,7 @@ const SignIn = () => {
                                             className="auth-input"
                                             value={code}
                                             placeholder="Enter 6-digit code"
-                                            placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                                            placeholderTextColor={placeholderColor}
                                             onChangeText={setCode}
                                             keyboardType="number-pad"
                                             autoComplete="one-time-code"
@@ -249,7 +251,7 @@ const SignIn = () => {
                                         autoCapitalize="none"
                                         value={emailAddress}
                                         placeholder="name@example.com"
-                                        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                                        placeholderTextColor={placeholderColor}
                                         onChangeText={setEmailAddress}
                                         onBlur={() => setEmailTouched(true)}
                                         keyboardType="email-address"
@@ -269,7 +271,7 @@ const SignIn = () => {
                                         className={`auth-input ${passwordTouched && !passwordValid && 'auth-input-error'}`}
                                         value={password}
                                         placeholder="Enter your password"
-                                        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                                        placeholderTextColor={placeholderColor}
                                         secureTextEntry
                                         onChangeText={setPassword}
                                         onBlur={() => setPasswordTouched(true)}

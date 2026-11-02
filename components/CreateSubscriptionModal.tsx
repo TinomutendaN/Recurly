@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 import { type IconKey } from '@/constants/icons';
 import type { SubscriptionInput } from '@/lib/api';
+import { useThemeColors } from "@/lib/useThemeColors";
 
 interface CreateSubscriptionModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ const iconForName = (name: string): IconKey =>
   BRAND_ICONS.find((key) => name.toLowerCase().includes(key)) ?? 'plus';
 
 const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscriptionModalProps) => {
+  const { placeholder: placeholderColor } = useThemeColors();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<Frequency>('Monthly');
@@ -127,7 +129,7 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
                 <TextInput
                   className="auth-input"
                   placeholder="Subscription name"
-                  placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                  placeholderTextColor={placeholderColor}
                   value={name}
                   onChangeText={setName}
                 />
@@ -138,7 +140,7 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
                 <TextInput
                   className="auth-input"
                   placeholder="0.00"
-                  placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                  placeholderTextColor={placeholderColor}
                   value={price}
                   onChangeText={setPrice}
                   keyboardType="decimal-pad"
@@ -202,7 +204,7 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
                 <TextInput
                   className="auth-input"
                   placeholder="Last 4 digits of card"
-                  placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                  placeholderTextColor={placeholderColor}
                   value={cardLast4}
                   onChangeText={(text) => setCardLast4(text.replace(/\D/g, '').slice(0, 4))}
                   keyboardType="number-pad"

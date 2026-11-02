@@ -6,10 +6,12 @@ import SubscriptionCard from "@/components/SubscriptionCard";
 import { useSubscriptionStore } from "@/lib/subscriptionStore";
 import { confirmDeleteSubscription } from "@/lib/confirmDeleteSubscription";
 import { usePostHog } from "posthog-react-native";
+import { useThemeColors } from "@/lib/useThemeColors";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 const Subscriptions = () => {
+    const { placeholder: placeholderColor } = useThemeColors();
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const { subscriptions, removeSubscription } = useSubscriptionStore();
@@ -28,11 +30,11 @@ const Subscriptions = () => {
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={
                     <View className="px-5 pt-5">
-                        <Text className="text-3xl font-bold text-dark mb-5">Subscriptions</Text>
+                        <Text className="text-3xl font-sans-bold text-primary mb-5">Subscriptions</Text>
                         <TextInput
-                            className="bg-card rounded-xl px-4 py-3 text-dark mb-4"
+                            className="bg-card rounded-xl px-4 py-3 text-primary mb-4"
                             placeholder="Search subscriptions..."
-                            placeholderTextColor="#666"
+                            placeholderTextColor={placeholderColor}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
