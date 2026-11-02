@@ -15,6 +15,7 @@ import { useUser } from '@clerk/expo';
 import { usePostHog } from 'posthog-react-native';
 import { useSubscriptionStore } from "@/lib/subscriptionStore";
 import type { SubscriptionInput } from "@/lib/api";
+import { confirmDeleteSubscription } from "@/lib/confirmDeleteSubscription";
 const SafeAreaView = styled(RNSafeAreaView);
 
 // Normalise every active subscription to its monthly cost
@@ -26,7 +27,7 @@ export default function App() {
     const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [cancellingId, setCancellingId] = useState<string | null>(null);
-    const { subscriptions, isLoading, hasLoaded, error, fetchSubscriptions, addSubscription, updateSubscription } = useSubscriptionStore();
+    const { subscriptions, isLoading, hasLoaded, error, fetchSubscriptions, addSubscription, updateSubscription, removeSubscription } = useSubscriptionStore();
 
     const activeSubscriptions = useMemo(
         () => subscriptions.filter((sub) => sub.status === 'active'),
@@ -167,6 +168,14 @@ export default function App() {
                             onPress={() => handleSubscriptionPress(item)}
                             onCancelPress={() => handleCancelSubscription(item)}
                             isCancelling={cancellingId === item.id}
+                            onDeletePress={() =>
+                                confirmDeleteSubscription(item, removeSubscription, () =>
+                                    posthog.capture('subscription_deleted', {
+                                        subscription_id: item.id,
+                                        subscription_name: item.name,
+                                    })
+                                )
+                            }
                         />
                     )}
                     extraData={[expandedSubscriptionId, cancellingId]}

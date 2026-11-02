@@ -4,13 +4,16 @@ import { styled } from "nativewind";
 import { useState } from "react";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import { useSubscriptionStore } from "@/lib/subscriptionStore";
+import { confirmDeleteSubscription } from "@/lib/confirmDeleteSubscription";
+import { usePostHog } from "posthog-react-native";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 const Subscriptions = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    const { subscriptions } = useSubscriptionStore();
+    const { subscriptions, removeSubscription } = useSubscriptionStore();
+    const posthog = usePostHog();
 
     const filteredSubscriptions = subscriptions.filter((subscription) =>
         subscription.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,6 +43,14 @@ const Subscriptions = () => {
                         {...item}
                         expanded={expandedId === item.id}
                         onPress={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                        onDeletePress={() =>
+                            confirmDeleteSubscription(item, removeSubscription, () =>
+                                posthog.capture('subscription_deleted', {
+                                    subscription_id: item.id,
+                                    subscription_name: item.name,
+                                })
+                            )
+                        }
                     />
                 )}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20, gap: 12 }}

@@ -2,10 +2,27 @@ import {View, Text, Image, Pressable} from 'react-native'
 import React from 'react'
 import {formatCurrency, formatStatusLabel, formatSubscriptionDateTime} from "@/lib/utils";
 import clsx from "clsx";
+import * as Haptics from "expo-haptics";
 
-const SubscriptionCard = ({ name, price, currency, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status, onCancelPress, isCancelling}: SubscriptionCardProps) => {
+// How long a cancelled subscription must be held before the delete prompt appears
+const DELETE_HOLD_MS = 1000;
+
+const SubscriptionCard = ({ name, price, currency, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status, onCancelPress, isCancelling, onDeletePress}: SubscriptionCardProps) => {
+    const canDelete = status === 'cancelled' && !!onDeletePress;
+
+    const handleLongPress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        onDeletePress?.();
+    };
+
     return (
-        <Pressable onPress={onPress} className={clsx('sub-card', expanded ? 'sub-card-expanded' : 'bg-card')} style={!expanded && color ? { backgroundColor: color } : undefined}>
+        <Pressable
+            onPress={onPress}
+            onLongPress={canDelete ? handleLongPress : undefined}
+            delayLongPress={DELETE_HOLD_MS}
+            className={clsx('sub-card', expanded ? 'sub-card-expanded' : 'bg-card')}
+            style={!expanded && color ? { backgroundColor: color } : undefined}
+        >
             <View className="sub-head">
                 <View className="sub-main">
                     <Image source={icon} className="sub-icon" />

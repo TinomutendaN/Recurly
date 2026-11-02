@@ -1,5 +1,6 @@
 import Constants from "expo-constants";
-import { icons, type IconKey } from "@/constants/icons";
+import { type IconKey } from "@/constants/icons";
+import { getSubscriptionIcon } from "@/lib/brandLogos";
 
 // In development the API runs on the same computer as Metro, so reuse Metro's
 // LAN address (e.g. 192.168.1.46) — that way a physical phone can reach it too.
@@ -28,7 +29,7 @@ type ApiSubscription = Omit<Subscription, "icon" | "billing"> & { iconKey?: stri
 
 const toSubscription = (sub: ApiSubscription): Subscription => ({
   ...sub,
-  icon: icons[sub.iconKey as IconKey] ?? icons.plus,
+  icon: getSubscriptionIcon(sub.name, sub.iconKey),
   billing: sub.frequency ?? "Monthly",
 });
 

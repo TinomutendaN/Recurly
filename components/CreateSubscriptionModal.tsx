@@ -11,6 +11,9 @@ interface CreateSubscriptionModalProps {
 }
 
 type Frequency = 'Monthly' | 'Yearly';
+// Only the card type and last 4 digits are collected — never the full card number
+type CardType = 'Visa' | 'Mastercard' | 'Amex' | 'Other';
+const CARD_TYPES: CardType[] = ['Visa', 'Mastercard', 'Amex', 'Other'];
 type Category = 'Entertainment' | 'AI Tools' | 'Developer Tools' | 'Design' | 'Productivity' | 'Other';
 const CATEGORIES: Category[] = ['Entertainment', 'AI Tools', 'Developer Tools', 'Design', 'Productivity', 'Other'];
 const CATEGORY_COLORS: Record<Category, string> = {
@@ -32,6 +35,8 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
   const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<Frequency>('Monthly');
   const [category, setCategory] = useState<Category>('Other');
+  const [cardType, setCardType] = useState<CardType | null>(null);
+  const [cardLast4, setCardLast4] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +50,8 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
     return Number.isFinite(numValue) && numValue > 0;
   };
 
-  const isValidForm = name.trim() !== '' && isValidPrice();
+  const isValidPaymentMethod = cardType !== null && /^\d{4}$/.test(cardLast4);
+  const isValidForm = name.trim() !== '' && isValidPrice() && isValidPaymentMethod;
 
   const handleSubmit = async () => {
     if (!isValidForm || isSaving) return;
@@ -60,6 +66,7 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
         currency: 'USD',
         frequency,
         category,
+        paymentMethod: `${cardType === 'Other' ? 'Card' : cardType} ending in ${cardLast4}`,
         status: 'active',
         iconKey: iconForName(name),
         color: CATEGORY_COLORS[category],
@@ -78,6 +85,8 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
     setPrice('');
     setFrequency('Monthly');
     setCategory('Other');
+    setCardType(null);
+    setCardLast4('');
     setError(null);
   };
 
@@ -173,6 +182,32 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
                     </Pressable>
                   ))}
                 </View>
+              </View>
+
+              <View className="auth-field">
+                <Text className="auth-label">Payment method</Text>
+                <View className="category-scroll">
+                  {CARD_TYPES.map((type) => (
+                    <Pressable
+                      key={type}
+                      className={clsx('category-chip', cardType === type && 'category-chip-active')}
+                      onPress={() => setCardType(type)}
+                    >
+                      <Text className={clsx('category-chip-text', cardType === type && 'category-chip-text-active')}>
+                        {type}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <TextInput
+                  className="auth-input"
+                  placeholder="Last 4 digits of card"
+                  placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                  value={cardLast4}
+                  onChangeText={(text) => setCardLast4(text.replace(/\D/g, '').slice(0, 4))}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
               </View>
 
               {error && <Text className="auth-error">{error}</Text>}

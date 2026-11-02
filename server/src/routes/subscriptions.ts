@@ -38,6 +38,15 @@ function validate(data: Record<string, unknown>, { partial }: { partial: boolean
       return "price must be a non-negative number";
     }
   }
+  if (!partial || "paymentMethod" in data) {
+    if (typeof data.paymentMethod !== "string" || !data.paymentMethod.trim()) {
+      return "paymentMethod is required";
+    }
+    // Only a label like "Visa ending in 4242" is stored — refuse anything resembling a full card number
+    if (/\d{5,}/.test(data.paymentMethod.replace(/[\s-]/g, ""))) {
+      return "paymentMethod must not contain a full card number";
+    }
+  }
   if ("frequency" in data && !FREQUENCIES.includes(data.frequency as never)) {
     return `frequency must be one of ${FREQUENCIES.join(", ")}`;
   }
