@@ -3,11 +3,13 @@ import React from 'react'
 import {formatCurrency, formatStatusLabel, formatSubscriptionDateTime} from "@/lib/utils";
 import clsx from "clsx";
 import * as Haptics from "expo-haptics";
+import { usePreferences } from "@/lib/preferencesStore";
 
 // How long a cancelled subscription must be held before the delete prompt appears
 const DELETE_HOLD_MS = 1000;
 
-const SubscriptionCard = ({ name, price, currency, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status, onCancelPress, isCancelling, onDeletePress}: SubscriptionCardProps) => {
+const SubscriptionCard = ({ name, price, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status, onCancelPress, isCancelling, onDeletePress}: SubscriptionCardProps) => {
+    const currency = usePreferences((state) => state.currency);
     const canDelete = status === 'cancelled' && !!onDeletePress;
 
     const handleLongPress = () => {
@@ -20,7 +22,7 @@ const SubscriptionCard = ({ name, price, currency, icon, billing, color, categor
             onPress={onPress}
             onLongPress={canDelete ? handleLongPress : undefined}
             delayLongPress={DELETE_HOLD_MS}
-            className={clsx('sub-card', expanded ? 'sub-card-expanded' : 'bg-card')}
+            className={clsx('sub-card', expanded ? 'sub-card-expanded' : 'bg-sheet')}
             style={!expanded && color ? { backgroundColor: color } : undefined}
         >
             <View className="sub-head">

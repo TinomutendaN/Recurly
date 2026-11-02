@@ -16,6 +16,7 @@ import { usePostHog } from 'posthog-react-native';
 import { useSubscriptionStore } from "@/lib/subscriptionStore";
 import type { SubscriptionInput } from "@/lib/api";
 import { confirmDeleteSubscription } from "@/lib/confirmDeleteSubscription";
+import { usePreferences } from "@/lib/preferencesStore";
 const SafeAreaView = styled(RNSafeAreaView);
 
 // Normalise every active subscription to its monthly cost
@@ -27,6 +28,7 @@ export default function App() {
     const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [cancellingId, setCancellingId] = useState<string | null>(null);
+    const currency = usePreferences((state) => state.currency);
     const { subscriptions, isLoading, hasLoaded, error, fetchSubscriptions, addSubscription, updateSubscription, removeSubscription } = useSubscriptionStore();
 
     const activeSubscriptions = useMemo(
@@ -72,7 +74,7 @@ export default function App() {
     };
 
     const handleCreateSubscription = async (input: SubscriptionInput) => {
-        const created = await addSubscription(input);
+        const created = await addSubscription({ ...input, currency });
         posthog.capture('subscription_created', {
             subscription_id: created.id,
             subscription_name: created.name,
@@ -133,7 +135,7 @@ export default function App() {
 
                                 <View className="home-balance-row">
                                     <Text className="home-balance-amount">
-                                        {formatCurrency(monthlyTotal)}
+                                        {formatCurrency(monthlyTotal, currency)}
                                     </Text>
                                     {nextRenewalDate && (
                                         <Text className="home-balance-date">

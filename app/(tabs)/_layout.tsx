@@ -8,6 +8,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from '@clerk/expo';
 import { useEffect } from "react";
 import { useSubscriptionStore } from "@/lib/subscriptionStore";
+import { usePreferences } from "@/lib/preferencesStore";
+import { syncRenewalReminders } from "@/lib/reminders";
+import { useThemeColors } from "@/lib/useThemeColors";
 
 const tabBar = components.tabBar;
 
@@ -23,7 +26,11 @@ const TabIcon = ({focused, icon}: TabIconProps) => {
 const TabLayout = () => {
         const { isSignedIn, isLoaded } = useAuth();
         const insets = useSafeAreaInsets();
-        const { fetchSubscriptions } = useSubscriptionStore();
+        const { subscriptions, hasLoaded, fetchSubscriptions } = useSubscriptionStore();
+        const remindersEnabled = usePreferences((state) => state.remindersEnabled);
+        const reminderDaysBefore = usePreferences((state) => state.reminderDaysBefore);
+        const currency = usePreferences((state) => state.currency);
+        const themeColors = useThemeColors();
 
         // Load this user's subscriptions from the API once they're signed in
         useEffect(() => {
@@ -32,6 +39,16 @@ const TabLayout = () => {
             }
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [isLoaded, isSignedIn]);
+
+        // Keep renewal reminders in step with the subscription list and reminder settings
+        useEffect(() => {
+            if (!hasLoaded) return;
+            syncRenewalReminders(subscriptions, {
+                enabled: remindersEnabled,
+                daysBefore: reminderDaysBefore,
+                currency,
+            }).catch((error) => console.warn('Could not schedule reminders:', error));
+        }, [hasLoaded, subscriptions, remindersEnabled, reminderDaysBefore, currency]);
 
         // Wait for auth to load before rendering anything
         if (!isLoaded) {

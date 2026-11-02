@@ -74,3 +74,8 @@ export const subscriptionsApi = {
   remove: (getToken: GetToken, id: string) =>
     request<void>(getToken, `/api/subscriptions/${id}`, { method: "DELETE" }),
 };
+
+export const accountApi = {
+  /** Permanently deletes the user's subscriptions and their Clerk account. */
+  remove: (getToken: GetToken) => request<void>(getToken, "/api/account", { method: "DELETE" }),
+};

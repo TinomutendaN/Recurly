@@ -1,8 +1,10 @@
 import {View, Text, Image} from 'react-native'
 import React from 'react'
 import {formatCurrency} from "@/lib/utils";
+import { usePreferences } from "@/lib/preferencesStore";
 
-const UpcomingSubscriptionCard = ({ name, price, daysLeft, icon, currency }: UpcomingSubscription) => {
+const UpcomingSubscriptionCard = ({ name, price, daysLeft, icon }: UpcomingSubscription) => {
+    const currency = usePreferences((state) => state.currency);
     return (
         <View className="upcoming-card">
             <View className="upcoming-row">

@@ -4,6 +4,7 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { connectToDatabase } from "./db.js";
 import subscriptionsRouter from "./routes/subscriptions.js";
+import accountRouter from "./routes/account.js";
 
 const { MONGODB_URI, CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY } = process.env;
 const PORT = Number(process.env.PORT) || 4000;
@@ -28,6 +29,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/subscriptions", subscriptionsRouter);
+app.use("/api/account", accountRouter);
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   console.error(error);

@@ -6,6 +6,9 @@ import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { PostHogProvider } from 'posthog-react-native';
 import { posthog } from '../src/config/posthog';
+import { Appearance } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { usePreferences } from '@/lib/preferencesStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -59,10 +62,22 @@ function RootLayoutContent() {
   // Don't render app until both are ready
   if (!fontsLoaded || !authLoaded) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <StatusBar style="auto" />
+      <Stack screenOptions={{ headerShown: false }} />
+    </>
+  );
 }
 
 export default function RootLayout() {
+  const theme = usePreferences((state) => state.theme);
+
+  // Apply the Appearance choice from Settings; "system" follows the phone's own setting
+  useEffect(() => {
+    Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+  }, [theme]);
+
   return (
     <PostHogProvider
       client={posthog}
