@@ -43,7 +43,12 @@ app.use(errorHandler);
 
 await connectToDatabase(MONGODB_URI!);
 
-// 0.0.0.0 so a phone on the same Wi-Fi can reach the server during development
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Recurrly API listening on http://localhost:${PORT}`);
-});
+// Vercel runs the exported app as a serverless function, so only listen locally
+if (!process.env.VERCEL) {
+  // 0.0.0.0 so a phone on the same Wi-Fi can reach the server during development
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Recurrly API listening on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
