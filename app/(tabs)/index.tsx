@@ -25,14 +25,19 @@ export default function App() {
     const { subscriptions, addSubscription } = useSubscriptionStore();
 
     // Get upcoming subscriptions (active subscriptions with renewal date within next 7 days)
-    const upcomingSubscriptions = useMemo(() => {
+    const upcomingSubscriptions = useMemo<UpcomingSubscription[]>(() => {
         const now = dayjs();
         const nextWeek = now.add(7, 'days');
         return subscriptions.filter(sub =>
             sub.status === 'active' &&
             dayjs(sub.renewalDate).isAfter(now) &&
             dayjs(sub.renewalDate).isBefore(nextWeek)
-        ).sort((a, b) => dayjs(a.renewalDate).diff(dayjs(b.renewalDate)));
+        ).sort((a, b) => dayjs(a.renewalDate).diff(dayjs(b.renewalDate)))
+        .map(sub => ({
+            ...sub,
+            // Count calendar days so "3 days left" doesn't flip to 2 partway through the day
+            daysLeft: dayjs(sub.renewalDate).startOf('day').diff(now.startOf('day'), 'day'),
+        }));
     }, [subscriptions]);
 
     const handleSubscriptionPress = (item: Subscription) => {

@@ -1,4 +1,15 @@
+import dayjs from "dayjs";
 import { icons } from "./icons";
+
+// Dummy dates are relative to today so the demo data always looks current
+const daysFromNow = (days: number) => dayjs().add(days, "day").hour(10).minute(0).second(0).millisecond(0).toISOString();
+// Start dates sit a whole number of billing cycles before the renewal date
+const monthsBefore = (date: string, months: number) => dayjs(date).subtract(months, "month").toISOString();
+
+const ADOBE_RENEWAL = daysFromNow(3);
+const GITHUB_RENEWAL = daysFromNow(6);
+const CLAUDE_RENEWAL = daysFromNow(25);
+const CANVA_RENEWAL = daysFromNow(150);
 
 export const tabs: AppTab[] = [
     { name: "index", title: "Home", icon: icons.home },
@@ -13,7 +24,7 @@ export const HOME_USER = {
 
 export const HOME_BALANCE = {
     amount: 2489.48,
-    nextRenewalDate: "2026-03-18T09:00:00.000Z",
+    nextRenewalDate: ADOBE_RENEWAL,
 };
 
 export const UPCOMING_SUBSCRIPTIONS: UpcomingSubscription[] = [
@@ -52,11 +63,11 @@ export const HOME_SUBSCRIPTIONS: Subscription[] = [
         category: "Design",
         paymentMethod: "Visa ending in 8530",
         status: "active",
-        startDate: "2025-03-20T10:00:00.000Z",
+        startDate: monthsBefore(ADOBE_RENEWAL, 19),
         price: 77.49,
         currency: "USD",
         billing: "Monthly",
-        renewalDate: "2026-03-20T10:00:00.000Z",
+        renewalDate: ADOBE_RENEWAL,
         color: "#f5c542",
     },
     {
@@ -67,11 +78,11 @@ export const HOME_SUBSCRIPTIONS: Subscription[] = [
         category: "Developer Tools",
         paymentMethod: "Mastercard ending in 2408",
         status: "active",
-        startDate: "2024-11-24T10:00:00.000Z",
+        startDate: monthsBefore(GITHUB_RENEWAL, 24),
         price: 9.99,
         currency: "USD",
         billing: "Monthly",
-        renewalDate: "2026-03-24T10:00:00.000Z",
+        renewalDate: GITHUB_RENEWAL,
         color: "#e8def8",
     },
     {
@@ -82,11 +93,11 @@ export const HOME_SUBSCRIPTIONS: Subscription[] = [
         category: "AI Tools",
         paymentMethod: "Amex ending in 1010",
         status: "paused",
-        startDate: "2025-06-27T10:00:00.000Z",
+        startDate: monthsBefore(CLAUDE_RENEWAL, 6),
         price: 20.0,
         currency: "USD",
         billing: "Monthly",
-        renewalDate: "2026-03-27T10:00:00.000Z",
+        renewalDate: CLAUDE_RENEWAL,
         color: "#b8d4e3",
     },
     {
@@ -97,11 +108,11 @@ export const HOME_SUBSCRIPTIONS: Subscription[] = [
         category: "Design",
         paymentMethod: "Visa ending in 7784",
         status: "cancelled",
-        startDate: "2024-04-02T10:00:00.000Z",
+        startDate: monthsBefore(CANVA_RENEWAL, 24),
         price: 119.99,
         currency: "USD",
         billing: "Yearly",
-        renewalDate: "2026-04-02T10:00:00.000Z",
+        renewalDate: CANVA_RENEWAL,
         color: "#b8e8d0",
     },
 ];
