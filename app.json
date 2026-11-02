@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "reactnativerecurrly",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -52,7 +51,10 @@
         }
       ],
       "@clerk/expo",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
