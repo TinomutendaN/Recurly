@@ -71,7 +71,7 @@ const TabLayout = () => {
                                 height: tabBar.height,
                                 marginHorizontal: tabBar.horizontalInset,
                                 borderRadius: tabBar.radius,
-                                backgroundColor: colors.primary,
+                                backgroundColor: themeColors.tabBar,
                                 borderTopWidth: 0,
                                 elevation: 0,
                         },
