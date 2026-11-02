@@ -195,5 +195,3 @@ detailed explanations, cool features, and exercises to boost your skills. Give i
   <img src="assets/readme/readme-jsmpro.webp" alt="Project Banner">
 </a>
 
-
-expo_token: fFzbPFW86m_futU1mAOIztpFojX2dXDHLu094EJV
