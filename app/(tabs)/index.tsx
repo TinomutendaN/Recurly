@@ -1,9 +1,8 @@
 import "@/global.css"
-import {FlatList, Image, Pressable, Text, View} from "react-native";
+import {ActivityIndicator, Alert, FlatList, Image, Pressable, Text, View} from "react-native";
 import {SafeAreaView as RNSafeAreaView} from "react-native-safe-area-context";
 import { styled } from "nativewind";
 import images from "@/constants/images";
-import {HOME_BALANCE} from "@/constants/data";
 import {icons} from "@/constants/icons";
 import {formatCurrency} from "@/lib/utils";
 import dayjs from "dayjs";
@@ -15,21 +14,35 @@ import {useState, useMemo} from "react";
 import { useUser } from '@clerk/expo';
 import { usePostHog } from 'posthog-react-native';
 import { useSubscriptionStore } from "@/lib/subscriptionStore";
+import type { SubscriptionInput } from "@/lib/api";
 const SafeAreaView = styled(RNSafeAreaView);
+
+// Normalise every active subscription to its monthly cost
+const monthlyCost = (sub: Subscription) => (sub.frequency === 'Yearly' ? sub.price / 12 : sub.price);
 
 export default function App() {
     const { user } = useUser();
     const posthog = usePostHog();
     const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const { subscriptions, addSubscription } = useSubscriptionStore();
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
+    const { subscriptions, isLoading, hasLoaded, error, fetchSubscriptions, addSubscription, updateSubscription } = useSubscriptionStore();
+
+    const activeSubscriptions = useMemo(
+        () => subscriptions.filter((sub) => sub.status === 'active'),
+        [subscriptions]
+    );
+
+    const monthlyTotal = useMemo(
+        () => activeSubscriptions.reduce((total, sub) => total + monthlyCost(sub), 0),
+        [activeSubscriptions]
+    );
 
     // Get upcoming subscriptions (active subscriptions with renewal date within next 7 days)
     const upcomingSubscriptions = useMemo<UpcomingSubscription[]>(() => {
         const now = dayjs();
         const nextWeek = now.add(7, 'days');
-        return subscriptions.filter(sub =>
-            sub.status === 'active' &&
+        return activeSubscriptions.filter(sub =>
             dayjs(sub.renewalDate).isAfter(now) &&
             dayjs(sub.renewalDate).isBefore(nextWeek)
         ).sort((a, b) => dayjs(a.renewalDate).diff(dayjs(b.renewalDate)))
@@ -38,7 +51,15 @@ export default function App() {
             // Count calendar days so "3 days left" doesn't flip to 2 partway through the day
             daysLeft: dayjs(sub.renewalDate).startOf('day').diff(now.startOf('day'), 'day'),
         }));
-    }, [subscriptions]);
+    }, [activeSubscriptions]);
+
+    const nextRenewalDate = useMemo(
+        () => activeSubscriptions
+            .map((sub) => sub.renewalDate)
+            .filter((date): date is string => !!date)
+            .sort((a, b) => dayjs(a).diff(dayjs(b)))[0],
+        [activeSubscriptions]
+    );
 
     const handleSubscriptionPress = (item: Subscription) => {
         const isExpanding = expandedSubscriptionId !== item.id;
@@ -49,14 +70,39 @@ export default function App() {
         });
     };
 
-    const handleCreateSubscription = (newSubscription: Subscription) => {
-        addSubscription(newSubscription);
+    const handleCreateSubscription = async (input: SubscriptionInput) => {
+        const created = await addSubscription(input);
         posthog.capture('subscription_created', {
-            subscription_name: newSubscription.name,
-            subscription_price: newSubscription.price,
-            subscription_frequency: newSubscription.frequency,
-            subscription_category: newSubscription.category,
+            subscription_id: created.id,
+            subscription_name: created.name,
+            subscription_price: created.price,
+            subscription_frequency: created.frequency ?? null,
+            subscription_category: created.category ?? null,
         });
+    };
+
+    const handleCancelSubscription = (item: Subscription) => {
+        Alert.alert('Cancel subscription?', `${item.name} will be marked as cancelled.`, [
+            { text: 'Keep', style: 'cancel' },
+            {
+                text: 'Cancel subscription',
+                style: 'destructive',
+                onPress: async () => {
+                    setCancellingId(item.id);
+                    try {
+                        await updateSubscription(item.id, { status: 'cancelled' });
+                        posthog.capture('subscription_cancelled', {
+                            subscription_id: item.id,
+                            subscription_name: item.name,
+                        });
+                    } catch (e) {
+                        Alert.alert('Could not cancel', e instanceof Error ? e.message : 'Please try again.');
+                    } finally {
+                        setCancellingId(null);
+                    }
+                },
+            },
+        ]);
     };
 
     // Get user display name: firstName, fullName, or email
@@ -73,7 +119,7 @@ export default function App() {
                                         source={user?.imageUrl ? { uri: user.imageUrl } : images.avatar}
                                         className="home-avatar"
                                     />
-                                    <Text className="home-user-name">{displayName}</Text>
+                                    <Text className="home-user-name" numberOfLines={1}>{displayName}</Text>
                                 </View>
 
                                 <Pressable onPress={() => setIsModalVisible(true)}>
@@ -82,15 +128,17 @@ export default function App() {
                             </View>
 
                             <View className="home-balance-card">
-                                <Text className="home-balance-label">Balance</Text>
+                                <Text className="home-balance-label">Monthly spend</Text>
 
                                 <View className="home-balance-row">
                                     <Text className="home-balance-amount">
-                                        {formatCurrency(HOME_BALANCE.amount)}
+                                        {formatCurrency(monthlyTotal)}
                                     </Text>
-                                    <Text className="home-balance-date">
-                                        {dayjs(HOME_BALANCE.nextRenewalDate).format('MM/DD')}
-                                    </Text>
+                                    {nextRenewalDate && (
+                                        <Text className="home-balance-date">
+                                            {dayjs(nextRenewalDate).format('MM/DD')}
+                                        </Text>
+                                    )}
                                 </View>
                             </View>
 
@@ -117,12 +165,26 @@ export default function App() {
                             {...item}
                             expanded={expandedSubscriptionId === item.id}
                             onPress={() => handleSubscriptionPress(item)}
+                            onCancelPress={() => handleCancelSubscription(item)}
+                            isCancelling={cancellingId === item.id}
                         />
                     )}
-                    extraData={expandedSubscriptionId}
+                    extraData={[expandedSubscriptionId, cancellingId]}
                     ItemSeparatorComponent={() => <View className="h-4" />}
                     showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={<Text className="home-empty-state">No subscriptions yet.</Text>}
+                    refreshing={isLoading && hasLoaded}
+                    onRefresh={fetchSubscriptions}
+                    ListEmptyComponent={
+                        !hasLoaded && isLoading ? (
+                            <ActivityIndicator className="mt-6" />
+                        ) : error ? (
+                            <Pressable onPress={fetchSubscriptions}>
+                                <Text className="home-empty-state">Couldn&apos;t load subscriptions: {error}. Tap to retry.</Text>
+                            </Pressable>
+                        ) : (
+                            <Text className="home-empty-state">No subscriptions yet. Tap + to add one.</Text>
+                        )
+                    }
                     contentContainerClassName="pb-30"
                 />
 

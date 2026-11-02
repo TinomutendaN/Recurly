@@ -6,6 +6,8 @@ import clsx from "clsx";
 import {Image} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from '@clerk/expo';
+import { useEffect } from "react";
+import { useSubscriptionStore } from "@/lib/subscriptionStore";
 
 const tabBar = components.tabBar;
 
@@ -21,6 +23,15 @@ const TabIcon = ({focused, icon}: TabIconProps) => {
 const TabLayout = () => {
         const { isSignedIn, isLoaded } = useAuth();
         const insets = useSafeAreaInsets();
+        const { fetchSubscriptions } = useSubscriptionStore();
+
+        // Load this user's subscriptions from the API once they're signed in
+        useEffect(() => {
+            if (isLoaded && isSignedIn) {
+                fetchSubscriptions();
+            }
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [isLoaded, isSignedIn]);
 
         // Wait for auth to load before rendering anything
         if (!isLoaded) {

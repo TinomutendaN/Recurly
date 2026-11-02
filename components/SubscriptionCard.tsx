@@ -3,7 +3,7 @@ import React from 'react'
 import {formatCurrency, formatStatusLabel, formatSubscriptionDateTime} from "@/lib/utils";
 import clsx from "clsx";
 
-const SubscriptionCard = ({ name, price, currency, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status}: SubscriptionCardProps) => {
+const SubscriptionCard = ({ name, price, currency, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status, onCancelPress, isCancelling}: SubscriptionCardProps) => {
     return (
         <Pressable onPress={onPress} className={clsx('sub-card', expanded ? 'sub-card-expanded' : 'bg-card')} style={!expanded && color ? { backgroundColor: color } : undefined}>
             <View className="sub-head">
@@ -26,7 +26,7 @@ const SubscriptionCard = ({ name, price, currency, icon, billing, color, categor
             </View>
 
             {expanded && (
-                <View className="sub-bdy">
+                <View className="sub-body">
                     <View className="sub-details">
                         <View className="sub-row">
                             <View className="sub-row-copy">
@@ -59,6 +59,16 @@ const SubscriptionCard = ({ name, price, currency, icon, billing, color, categor
                             </View>
                         </View>
                     </View>
+
+                    {onCancelPress && status === 'active' && (
+                        <Pressable
+                            className={clsx('sub-cancel', isCancelling && 'sub-cancel-disabled')}
+                            onPress={onCancelPress}
+                            disabled={isCancelling}
+                        >
+                            <Text className="sub-cancel-text">{isCancelling ? 'Cancelling...' : 'Cancel subscription'}</Text>
+                        </Pressable>
+                    )}
                 </View>
             )}
         </Pressable>

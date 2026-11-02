@@ -1,14 +1,13 @@
 import { View, Text, Modal, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import React, { useState } from 'react';
 import clsx from 'clsx';
-import { icons } from '@/constants/icons';
-import dayjs from 'dayjs';
-import {posthog} from "@/src/config/posthog";
+import { type IconKey } from '@/constants/icons';
+import type { SubscriptionInput } from '@/lib/api';
 
 interface CreateSubscriptionModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (subscription: Subscription) => void;
+  onSubmit: (subscription: SubscriptionInput) => Promise<void>;
 }
 
 type Frequency = 'Monthly' | 'Yearly';
@@ -23,11 +22,18 @@ const CATEGORY_COLORS: Record<Category, string> = {
   'Other': '#d4d4d4',
 };
 
+// Brand icons bundled with the app; a matching name (e.g. "Spotify Premium") gets its logo
+const BRAND_ICONS: IconKey[] = ['notion', 'dropbox', 'openai', 'adobe', 'medium', 'figma', 'spotify', 'github', 'claude', 'canva'];
+const iconForName = (name: string): IconKey =>
+  BRAND_ICONS.find((key) => name.toLowerCase().includes(key)) ?? 'plus';
+
 const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscriptionModalProps) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<Frequency>('Monthly');
   const [category, setCategory] = useState<Category>('Other');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Improved price validation
   const isValidPrice = () => {
@@ -41,39 +47,30 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
 
   const isValidForm = name.trim() !== '' && isValidPrice();
 
-  const handleSubmit = () => {
-    if (!isValidForm) return;
+  const handleSubmit = async () => {
+    if (!isValidForm || isSaving) return;
 
-    const priceValue = Number(price.trim());
-    const now = dayjs();
-    const renewalDate = frequency === 'Monthly' ? now.add(1, 'month') : now.add(1, 'year');
-
-    const newSubscription: Subscription = {
-      id: `sub-${Date.now()}`,
-      name: name.trim(),
-      price: priceValue,
-      currency: 'USD',
-      frequency,
-      category,
-      status: 'active',
-      startDate: now.toISOString(),
-      renewalDate: renewalDate.toISOString(),
-      icon: icons.plus,
-      billing: frequency,
-      color: CATEGORY_COLORS[category],
-    };
-
-    onSubmit(newSubscription);
-
-    posthog.capture('subscription_created', {
-      subscription_name: name.trim(),
-      subscription_price: priceValue,
-      subscription_frequency: frequency,
-      subscription_category: category,
-    })
-
-    resetForm();
-    onClose();
+    setIsSaving(true);
+    setError(null);
+    try {
+      // The server sets the start date and calculates the first renewal date
+      await onSubmit({
+        name: name.trim(),
+        price: Number(price.trim()),
+        currency: 'USD',
+        frequency,
+        category,
+        status: 'active',
+        iconKey: iconForName(name),
+        color: CATEGORY_COLORS[category],
+      });
+      resetForm();
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save subscription');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const resetForm = () => {
@@ -81,6 +78,7 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
     setPrice('');
     setFrequency('Monthly');
     setCategory('Other');
+    setError(null);
   };
 
   const handleClose = () => {
@@ -177,12 +175,14 @@ const CreateSubscriptionModal = ({ visible, onClose, onSubmit }: CreateSubscript
                 </View>
               </View>
 
+              {error && <Text className="auth-error">{error}</Text>}
+
               <Pressable
-                className={clsx('auth-button', !isValidForm && 'auth-button-disabled')}
+                className={clsx('auth-button', (!isValidForm || isSaving) && 'auth-button-disabled')}
                 onPress={handleSubmit}
-                disabled={!isValidForm}
+                disabled={!isValidForm || isSaving}
               >
-                <Text className="auth-button-text">Create Subscription</Text>
+                <Text className="auth-button-text">{isSaving ? 'Saving...' : 'Create Subscription'}</Text>
               </Pressable>
             </ScrollView>
           </Pressable>

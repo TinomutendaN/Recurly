@@ -4,6 +4,7 @@ import { styled } from "nativewind";
 import { useClerk, useUser } from '@clerk/expo';
 import images from '@/constants/images';
 import { usePostHog } from 'posthog-react-native';
+import { resetSubscriptionStore } from '@/lib/subscriptionStore';
 const SafeAreaView = styled(RNSafeAreaView);
 
 const Settings = () => {
@@ -15,8 +16,9 @@ const Settings = () => {
         posthog.capture('user_signed_out');
         try {
             await signOut();
-            // Only reset analytics after successful sign-out
+            // Only reset analytics and cached data after successful sign-out
             posthog.reset();
+            resetSubscriptionStore();
         } catch (error) {
             console.error('Sign-out failed:', error);
             // Don't reset analytics if sign-out failed
