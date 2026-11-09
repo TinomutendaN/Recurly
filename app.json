@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "react_native-recurrly",
+    "name": "Recurrly",
     "slug": "react_native-recurrly",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.tinomutendan.recurrly",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
